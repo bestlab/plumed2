@@ -281,10 +281,11 @@ double SwitchingFunction::calculate(double distance,double&dfunc)const{
   }
   const double rdist = (distance-d0)*invr0;
   double result;
-  if(rdist<=0.){
-     result=1.;
-     dfunc=0.0;
-  }else{
+  //wz fraction of native contacts, no switching
+  //if(rdist<=0.){
+//     result=1.;
+//     dfunc=0.0;
+//  }else{
     if(type==smap){
       double sx=c*pow( rdist, a ); 
       result=pow( 1.0 + sx, d ); 
@@ -292,8 +293,13 @@ double SwitchingFunction::calculate(double distance,double&dfunc)const{
     } else if(type==rational){
       result=do_rational(rdist,dfunc,nn,mm);
     }else if(type==exponential){
-      result=exp(-rdist);
-      dfunc=-result;
+	// this will be used as fraction of native contacts
+      //result=exp(-rdist);
+      //dfunc=-result;
+      double ttt;
+      ttt=exp(rdist);
+      result=1./(1.+ttt);
+      dfunc=-ttt/(1.+ttt)/(1.+ttt);
     }else if(type==gaussian){
       result=exp(-0.5*rdist*rdist);
       dfunc=-rdist*result;
@@ -311,7 +317,7 @@ double SwitchingFunction::calculate(double distance,double&dfunc)const{
 // this is because calculate() sets dfunc to the derivative divided times the distance.
 // (I think this is misleading and I would like to modify it - GB)
     dfunc/=distance;
-  }
+  //}
 
   result=result*stretch+shift;
   dfunc*=stretch;
