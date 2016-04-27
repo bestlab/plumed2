@@ -43,7 +43,7 @@ void DRMSD::setBoundsOnDistances( bool dopbc, double lbound, double ubound ){
 }
 
 void DRMSD::read( const PDB& pdb ){
-  readAtomsFromPDB( pdb );
+  readAtomsFromPDB( pdb, true );
 
   parseFlag("NOPBC",nopbc);  
   parse("LOWER_CUTOFF",lower,true);

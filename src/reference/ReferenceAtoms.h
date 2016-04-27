@@ -63,7 +63,7 @@ private:
   std::vector<unsigned> der_index;
 protected:
 /// Read in the atoms from the pdb file
-  void readAtomsFromPDB( const PDB& );
+  void readAtomsFromPDB( const PDB& , bool checkBlocks=false);
 /// Add atom indices to list
   void setAtomIndices( const std::vector<AtomNumber>& atomnumbers );
 /// Read a list of atoms from the pdb input file
