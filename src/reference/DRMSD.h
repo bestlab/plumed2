@@ -30,7 +30,7 @@
 namespace PLMD {
 
 class DRMSD : public SingleDomainRMSD {
-private:
+protected:
   bool bounds_were_set;
   bool nopbc;
   double lower, upper;
@@ -49,4 +49,3 @@ public:
 
 }
 #endif
-
