@@ -22,20 +22,27 @@
 #ifndef __PLUMED_core_ExchangePatterns_h
 #define __PLUMED_core_ExchangePatterns_h
 
+#include <vector>
+
+using namespace std;
+
 namespace PLMD {
 class Random;
 
   class ExchangePatterns {
+    std::vector<int> dimensions;
+    int    Dimension;
     int    PatternFlag;
     int    NumberOfReplicas;
     Random& random;
 public:
   ExchangePatterns();
   ~ExchangePatterns();
-  enum PatternFlags { NONE, RANDOM, NEIGHBOR, TOTAL };
+  enum PatternFlags { NONE, RANDOM, JANDOM, NEIGHBOR, TOTAL };
   void setNofR(const int);
   void setSeed(const int);
   void setFlag(const int);
+  void setDimensions(std::vector<int>& dimensions);
   void getList(int *ind);
   void getFlag(int&);
 };
