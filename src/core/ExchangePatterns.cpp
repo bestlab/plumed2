@@ -19,14 +19,19 @@
    You should have received a copy of the GNU Lesser General Public License
    along with plumed.  If not, see <http://www.gnu.org/licenses/>.
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
-#include "ExchangePatterns.h"
+#include "ExchangePatterns.h"  
 #include "tools/Random.h"
+#include <vector>
+#include <stdio.h>
+#include <iostream>
 
 using namespace std;
 
 namespace PLMD{
 
 ExchangePatterns::ExchangePatterns():
+  Dimension(-1),
+  dimensions(2,0), // initialize vector of lenght 2, filled with zeros (0,0)
   PatternFlag(NONE),
   NumberOfReplicas(1),
   random(*new Random)
@@ -54,6 +59,11 @@ void ExchangePatterns::setSeed(const int seed)
   random.setSeed(seed);
 }
 
+void ExchangePatterns::setDimensions(std::vector<int>&dims){
+  dimensions[0]=dims[0];
+  dimensions[1]=dims[1];
+}
+
 void ExchangePatterns::getList(int *ind)
 {
   switch(PatternFlag)
@@ -68,10 +78,52 @@ void ExchangePatterns::getList(int *ind)
         }
       }
       break;
+    case JANDOM:
+      // TODO check if dimension[0]*dimension[1] == NumberOfRelpicas
+      // TODO relpace by case switch
+      // TODO this code is hard to reason about
+      // std::cout << "\nJANDOM! ";
+      if (Dimension<0) {
+          // std::cout << "dimension=0 " << dimensions[0] << "x" << dimensions[1] < " " ;
+          for(int r=0;r<dimensions[0];r++) {
+              for(int c=0;c<dimensions[1];c++) {
+                  int i = r*dimensions[1]+c;
+                  int j = r % 2 ? (r+1)*dimensions[1]-(c+1) : r*dimensions[1]+c;
+                  //printf("\nloop c=%d r=%d i=%d j=%d", c, r, i, j);
+                  ind[i] = j;
+              }
+          }
+          //std::cout << "\nReplica Dimension=" << Dimension << ", ind= " ; for(int i=0;i<NumberOfReplicas;i++)  std::cout << ind[i] << ", " ;
+          Dimension--;
+          if (Dimension < -2) Dimension = 1;
+          break;
+      }
+
+      if (Dimension>0) {
+          // std::cout << "dimension=1 " << dimensions[0] << "x" << dimensions[1] << " " ;
+          
+          for(int c=0;c<dimensions[1];c++) { 
+              for(int r=0;r<dimensions[0];r++) {
+                  int i = c*dimensions[0]+r;
+                  int j = c % 2 ? dimensions[1]*(dimensions[0]-r) - (dimensions[1]-c) : r*dimensions[1]+c;
+                  //printf("\nloop c=%d r=%d i=%d j=%d", c, r, i, j);
+                  ind[i] = j;
+              }
+          }
+          //std::cout << "\nReplica Dimension=" << Dimension << ", ind= " ; for(int i=0;i<NumberOfReplicas;i++)  std::cout << ind[i] << ", " ;
+          Dimension++;
+          if (Dimension > 2) Dimension = -1;
+          break;
+      }
+      // TODO add a general, multidimensional relpex scheme
+      // do NEIGHBOR exchange only, easy
+      //for(int i=0;i<NumberOfReplicas;i++) ind[i]=i; 
+      break;
     case NEIGHBOR:
       for(int i=0;i<NumberOfReplicas;i++) ind[i]=i; 
       break; 
   }
+  
 }
 
 }
