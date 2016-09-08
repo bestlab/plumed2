@@ -1,0 +1,28 @@
+
+; Include forcefield parameters
+#include "./c36_c22prot.ff/forcefield.itp"
+
+; Include water topology
+#include "./c36_c22prot.ff/tip3p.itp"
+
+#ifdef POSRES_WATER
+; Position restraint for each water oxygen
+[ position_restraints ]
+;  i funct       fcx        fcy        fcz
+   1    1       1000       1000       1000
+#endif
+
+#include "./topol_Protein.itp"
+
+; Include topology for ions
+#include "./c36_c22prot.ff/ions.itp"
+
+[ system ]
+; Name
+topol.py
+
+[ molecules ]
+; Compound        #mols
+Protein	1
+SOL	880
+
