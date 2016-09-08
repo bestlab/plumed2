@@ -1171,6 +1171,15 @@ double do_md(FILE *fplog, t_commrec *cr, int nfile, const t_filenm fnm[],
         gmx_bool bHREX;
         bHREX= repl_ex_nst > 0 && (step>0) && !bLastStep && do_per_step(step,repl_ex_nst) && plumed_hrex;
 
+        if (plumedswitch && MASTER(cr)) if (repl_ex_nst > 0 && (step>0) && !bLastStep && do_per_step(step,repl_ex_nst)) {
+            int plumed_test_exchange_pattern;
+            plumed_cmd(plumedmain,"getExchangesFlag",&plumed_test_exchange_pattern);
+            if(plumed_test_exchange_pattern>0){
+                replica_exchange_get_exchange_list(repl_ex);
+            }
+        }
+
+
 /* Hamiltonian Replica Exchange */
         if(plumedswitch) if(bHREX){
           gmx_enerdata_t *hrex_enerd;

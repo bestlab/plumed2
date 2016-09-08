@@ -92,7 +92,7 @@ void JandomExchanges::registerKeywords( Keywords& keys ){
 }
 
 JandomExchanges::JandomExchanges(const ActionOptions&ao):
-dimensions(2,0.0),
+dimensions(2,0.0), // dimensions=(0.0,0.0)
 Action(ao)
 {
   plumed.getExchangePatterns().setFlag(ExchangePatterns::JANDOM);
@@ -104,7 +104,7 @@ Action(ao)
   parseVector("DIMENSIONS",dimensions);
   checkRead();
 
-  // TODO check that dimensions multiple to nrepl
+  // TODO check that dimensions multiple to nrepl/multi
 
   log.printf(" multi-dimensional replica exchange, with following dimensions:");
   for(unsigned i=0;i<dimensions.size();i++) log.printf(" %d",dimensions[i]);
