@@ -41,6 +41,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 
 #include "thread_mpi/threads.h"
 
@@ -1052,8 +1053,13 @@ double do_md(FILE *fplog, t_commrec *cr, int nfile, const t_filenm fnm[],
 /* PLUMED HREX */
         gmx_bool bHREX;
         bHREX= repl_ex_nst > 0 && (step>0) && !bLastStep && do_per_step(step,repl_ex_nst) && plumed_hrex;
+        int plumed_test_exchange_pattern=0;
 
-        if(plumedswitch) if(bHREX){
+        if(plumedswitch)
+
+          plumed_cmd(plumedmain,"getExchangesFlag",&plumed_test_exchange_pattern);
+
+          if(bHREX){
           gmx_enerdata_t *hrex_enerd;
           snew(hrex_enerd,1);
           init_enerdata(top_global->groups.grps[egcENER].nr,ir->fepvals->n_lambda,hrex_enerd);
@@ -1062,6 +1068,8 @@ double do_md(FILE *fplog, t_commrec *cr, int nfile, const t_filenm fnm[],
           if(MASTER(cr)){
             repl=replica_exchange_get_repl(repl_ex);
             nrepl=replica_exchange_get_nrepl(repl_ex);
+            std::cout << "getExchangesFlag step=" << step << std::endl;
+            replica_exchange_get_exchanges_list(repl_ex);
           }
           if (DOMAINDECOMP(cr))
             dd_collect_state(cr->dd,state,state_global);

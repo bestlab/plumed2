@@ -19,11 +19,13 @@
    You should have received a copy of the GNU Lesser General Public License
    along with plumed.  If not, see <http://www.gnu.org/licenses/>.
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
-#include "ExchangePatterns.h"  
+#include "ExchangePatterns.h"
 #include "tools/Random.h"
 #include <vector>
 #include <stdio.h>
 #include <iostream>
+#include <string>
+#include <sstream>
 
 using namespace std;
 
@@ -93,7 +95,12 @@ void ExchangePatterns::getList(int *ind)
                   ind[i] = j;
               }
           }
-          //std::cout << "\nReplica Dimension=" << Dimension << ", ind= " ; for(int i=0;i<NumberOfReplicas;i++)  std::cout << ind[i] << ", " ;
+
+          std::string indicies; ostringstream convert;
+          for(int i=0;i<NumberOfReplicas;i++) convert << ind[i] << " ";
+          indicies = convert.str();
+          printf("Replica Dimension=%2d ind=%s\n", Dimension, indicies.c_str());
+          //std::cout << "Replica Dimension=" << Dimension << ", ind= " ; for(int i=0;i<NumberOfReplicas;i++)  std::cout << ind[i] << ", "; std::cout << std::endl;
           Dimension--;
           if (Dimension < -2) Dimension = 1;
           break;
@@ -101,8 +108,8 @@ void ExchangePatterns::getList(int *ind)
 
       if (Dimension>0) {
           // std::cout << "dimension=1 " << dimensions[0] << "x" << dimensions[1] << " " ;
-          
-          for(int c=0;c<dimensions[1];c++) { 
+
+          for(int c=0;c<dimensions[1];c++) {
               for(int r=0;r<dimensions[0];r++) {
                   int i = c*dimensions[0]+r;
                   int j = c % 2 ? dimensions[1]*(dimensions[0]-r) - (dimensions[1]-c) : r*dimensions[1]+c;
@@ -110,20 +117,24 @@ void ExchangePatterns::getList(int *ind)
                   ind[i] = j;
               }
           }
-          //std::cout << "\nReplica Dimension=" << Dimension << ", ind= " ; for(int i=0;i<NumberOfReplicas;i++)  std::cout << ind[i] << ", " ;
+          std::string indicies; ostringstream convert;
+          for(int i=0;i<NumberOfReplicas;i++) convert << ind[i] << " ";
+          indicies = convert.str();
+          printf("Replica Dimension=%2d ind=%s\n", Dimension, indicies.c_str());
+          //std::cout << "Replica Dimension=" << Dimension << ", ind= " ; for(int i=0;i<NumberOfReplicas;i++)  std::cout << ind[i] << ", " ; std::cout << std::endl;
           Dimension++;
           if (Dimension > 2) Dimension = -1;
           break;
       }
       // TODO add a general, multidimensional relpex scheme
       // do NEIGHBOR exchange only, easy
-      //for(int i=0;i<NumberOfReplicas;i++) ind[i]=i; 
+      //for(int i=0;i<NumberOfReplicas;i++) ind[i]=i;
       break;
     case NEIGHBOR:
-      for(int i=0;i<NumberOfReplicas;i++) ind[i]=i; 
-      break; 
+      for(int i=0;i<NumberOfReplicas;i++) ind[i]=i;
+      break;
   }
-  
+
 }
 
 }

@@ -1011,7 +1011,7 @@ test_for_replica_exchange(FILE                 *fplog,
     int plumed_test_exchange_pattern=0;
     /* END PLUMED */
 
-    if(plumed_test_exchange_pattern && plumed_hrex) gmx_fatal(FARGS,"hrex not compatible with ad hoc exchange patterns");
+    //if(plumed_test_exchange_pattern && plumed_hrex) gmx_fatal(FARGS,"hrex not compatible with ad hoc exchange patterns");
 
     if (bMultiEx)
     {
@@ -1093,12 +1093,7 @@ test_for_replica_exchange(FILE                 *fplog,
           int partner=re->repl;
           plumed_cmd(plumedmain,"getExchangesFlag",&plumed_test_exchange_pattern);
           if(plumed_test_exchange_pattern>0){
-            int *list;
-            snew(list,re->nrepl);
-            plumed_cmd(plumedmain,"setNumberOfReplicas",&(re->nrepl));
-            plumed_cmd(plumedmain,"getExchangesList",list);
-            for(i=0; i<re->nrepl; i++) re->ind[i]=list[i];
-            sfree(list);
+            replica_exchange_get_exchanges_list(re);
           }
 
           for(i=1; i<re->nrepl; i++) {
@@ -1540,3 +1535,12 @@ int replica_exchange_get_nrepl(const gmx_repl_ex_t re){
   return re->nrepl;
 };
 
+void replica_exchange_get_exchanges_list(const gmx_repl_ex_t re){
+  int *list;
+  snew(list,re->nrepl);
+  plumed_cmd(plumedmain,"setNumberOfReplicas",&(re->nrepl));
+  plumed_cmd(plumedmain,"getExchangesList",list);
+  for(int i=0; i<re->nrepl; i++) re->ind[i]=list[i];
+  sfree(list);
+  return;
+};
