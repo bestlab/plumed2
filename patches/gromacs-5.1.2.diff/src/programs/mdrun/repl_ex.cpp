@@ -1088,13 +1088,10 @@ test_for_replica_exchange(FILE                 *fplog,
         /* standard nearest neighbor replica exchange */
 
         m = (step / re->nst) % 2;
+        //printf("GREX plumed partner=%d m=%d step=%d re->nst=%d\n", re->repl, m, step, re->nst);
         /* PLUMED */
         if(plumedswitch){
           int partner=re->repl;
-          plumed_cmd(plumedmain,"getExchangesFlag",&plumed_test_exchange_pattern);
-          if(plumed_test_exchange_pattern>0){
-            replica_exchange_get_exchanges_list(re);
-          }
 
           for(i=1; i<re->nrepl; i++) {
             if (i % 2 != m) continue;
@@ -1126,6 +1123,7 @@ test_for_replica_exchange(FILE                 *fplog,
                   sprintf(buf,"GREX getDeltaBias %d",b); plumed_cmd(plumedmain,buf,&bdb);
                   dplumed=adb*re->beta[a]+bdb*re->beta[b];
                   delta+=dplumed;
+                  //printf("GREX getDeltaBias adb=%7.3f bdb=%7.3f delta=%7.3f dplumed=%7.3f\n", adb, bdb, delta, dplumed);
                   if (bPrint)
                     fprintf(fplog,"dplumed = %10.3e  dE_Term = %10.3e (kT)\n",dplumed,delta);
                 }
@@ -1544,3 +1542,18 @@ void replica_exchange_get_exchanges_list(const gmx_repl_ex_t re){
   sfree(list);
   return;
 };
+
+
+int replica_exchange_get_ind(const gmx_repl_ex_t re, int index) {
+  return re->ind[index];
+}
+
+int replica_exchange_find_ind(const gmx_repl_ex_t re) {
+  int i, a;
+  for(i=0; i<re->nrepl; i++) {
+    a = re->ind[i];
+    if(re->repl==a) return i;
+  }
+  return 0;
+
+}

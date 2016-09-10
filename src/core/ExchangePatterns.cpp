@@ -99,7 +99,7 @@ void ExchangePatterns::getList(int *ind)
           std::string indicies; ostringstream convert;
           for(int i=0;i<NumberOfReplicas;i++) convert << ind[i] << " ";
           indicies = convert.str();
-          printf("Replica Dimension=%2d ind=%s\n", Dimension, indicies.c_str());
+          //printf("Replica Dimension=%2d ind=%s\n", Dimension, indicies.c_str());
           //std::cout << "Replica Dimension=" << Dimension << ", ind= " ; for(int i=0;i<NumberOfReplicas;i++)  std::cout << ind[i] << ", "; std::cout << std::endl;
           Dimension--;
           if (Dimension < -2) Dimension = 1;
@@ -120,7 +120,7 @@ void ExchangePatterns::getList(int *ind)
           std::string indicies; ostringstream convert;
           for(int i=0;i<NumberOfReplicas;i++) convert << ind[i] << " ";
           indicies = convert.str();
-          printf("Replica Dimension=%2d ind=%s\n", Dimension, indicies.c_str());
+          //printf("Replica Dimension=%2d ind=%s\n", Dimension, indicies.c_str());
           //std::cout << "Replica Dimension=" << Dimension << ", ind= " ; for(int i=0;i<NumberOfReplicas;i++)  std::cout << ind[i] << ", " ; std::cout << std::endl;
           Dimension++;
           if (Dimension > 2) Dimension = -1;

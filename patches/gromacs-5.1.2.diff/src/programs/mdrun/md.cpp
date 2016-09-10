@@ -1052,14 +1052,19 @@ double do_md(FILE *fplog, t_commrec *cr, int nfile, const t_filenm fnm[],
 
 /* PLUMED HREX */
         gmx_bool bHREX;
-        bHREX= repl_ex_nst > 0 && (step>0) && !bLastStep && do_per_step(step,repl_ex_nst) && plumed_hrex;
-        int plumed_test_exchange_pattern=0;
+        gmx_bool plumed_exchange = repl_ex_nst > 0 && (step>0) && !bLastStep && do_per_step(step,repl_ex_nst);
+        bHREX= plumed_exchange && plumed_hrex;
 
-        if(plumedswitch)
+        if (plumedswitch && MASTER(cr)) if (plumed_exchange) {
+            int plumed_test_exchange_pattern;
+            plumed_cmd(plumedmain,"getExchangesFlag",&plumed_test_exchange_pattern);
+            if(plumed_test_exchange_pattern>0){
+                replica_exchange_get_exchanges_list(repl_ex);
+            }
+        }
 
-          plumed_cmd(plumedmain,"getExchangesFlag",&plumed_test_exchange_pattern);
-
-          if(bHREX){
+/* Hamiltonian Replica Exchange */
+        if(plumedswitch) if(bHREX){
           gmx_enerdata_t *hrex_enerd;
           snew(hrex_enerd,1);
           init_enerdata(top_global->groups.grps[egcENER].nr,ir->fepvals->n_lambda,hrex_enerd);
@@ -1068,18 +1073,23 @@ double do_md(FILE *fplog, t_commrec *cr, int nfile, const t_filenm fnm[],
           if(MASTER(cr)){
             repl=replica_exchange_get_repl(repl_ex);
             nrepl=replica_exchange_get_nrepl(repl_ex);
-            std::cout << "getExchangesFlag step=" << step << std::endl;
-            replica_exchange_get_exchanges_list(repl_ex);
           }
+/* exchange forward */
           if (DOMAINDECOMP(cr))
             dd_collect_state(cr->dd,state,state_global);
           else
             copy_state_nonatomdata(state, state_global);
           if(MASTER(cr)){
-            if(repl%2==step/repl_ex_nst%2){
-              if(repl-1>=0) exchange_state(cr->ms,repl-1,state_global);
+            //printf("GREX exchange forward %s repl=%d step=%d repl_ex_nst=%d\n", repl%2==step/repl_ex_nst%2 ? "true":"false", repl, step, repl_ex_nst );
+            int ind = replica_exchange_find_ind(repl_ex);
+            if(ind%2==step/repl_ex_nst%2){
+              if(ind-1>=0) {
+                //printf("GREX forw repl=%2d ind[i]=%2d ind[i-1]=%2d\n", repl, replica_exchange_get_ind(repl_ex, ind), replica_exchange_get_ind(repl_ex, ind-1));
+                exchange_state(cr->ms,replica_exchange_get_ind(repl_ex, ind-1),state_global); }
             }else{
-              if(repl+1<nrepl) exchange_state(cr->ms,repl+1,state_global);
+              if(ind+1<nrepl) {
+                 //printf("GREX forw repl=%2d ind[i]=%2d ind[i+1]=%2d\n", repl, replica_exchange_get_ind(repl_ex, ind), replica_exchange_get_ind(repl_ex, ind+1));
+                 exchange_state(cr->ms,replica_exchange_get_ind(repl_ex, ind+1),state_global); }
             }
           }
           if (!DOMAINDECOMP(cr))
@@ -1092,6 +1102,7 @@ double do_md(FILE *fplog, t_commrec *cr, int nfile, const t_filenm fnm[],
                               nrnb,wcycle,FALSE);
             }
           }
+/* exchange forward end */
           do_force(fplog, cr, ir, step, nrnb, wcycle, top, groups,
                      state->box, state->x, &state->hist,
                      f, force_vir, mdatoms, hrex_enerd, fcd,
@@ -1109,16 +1120,22 @@ double do_md(FILE *fplog, t_commrec *cr, int nfile, const t_filenm fnm[],
           plumed_cmd(plumedmain,"GREX cacheLocalUSwap",&hrex_enerd->term[F_EPOT]);
           sfree(hrex_enerd);
 
-/* exchange back */
+/* exchange back, almost the same as exchange forward */
           if (DOMAINDECOMP(cr))
             dd_collect_state(cr->dd,state,state_global);
           else
             copy_state_nonatomdata(state, state_global);
           if(MASTER(cr)){
-            if(repl%2==step/repl_ex_nst%2){
-              if(repl-1>=0) exchange_state(cr->ms,repl-1,state_global);
+            //printf("GREX exchange forward %s repl=%d step=%d repl_ex_nst=%d\n", repl%2==step/repl_ex_nst%2 ? "true":"false", repl, step, repl_ex_nst );
+            int ind = replica_exchange_find_ind(repl_ex);
+            if(ind%2==step/repl_ex_nst%2){
+              if(ind-1>=0) {
+                //printf("GREX forw repl=%2d ind[i]=%2d ind[i-1]=%2d\n", repl, replica_exchange_get_ind(repl_ex, ind), replica_exchange_get_ind(repl_ex, ind-1));
+                exchange_state(cr->ms,replica_exchange_get_ind(repl_ex, ind-1),state_global); }
             }else{
-              if(repl+1<nrepl) exchange_state(cr->ms,repl+1,state_global);
+              if(ind+1<nrepl) {
+                 //printf("GREX forw repl=%2d ind[i]=%2d ind[i+1]=%2d\n", repl, replica_exchange_get_ind(repl_ex, ind), replica_exchange_get_ind(repl_ex, ind+1));
+                 exchange_state(cr->ms,replica_exchange_get_ind(repl_ex, ind+1),state_global); }
             }
           }
           if (!DOMAINDECOMP(cr))
@@ -1129,13 +1146,14 @@ double do_md(FILE *fplog, t_commrec *cr, int nfile, const t_filenm fnm[],
                               state_global,top_global,ir,
                               state,&f,mdatoms,top,fr,vsite,shellfc,constr,
                               nrnb,wcycle,FALSE);
+              // unique to exchange-back, not present in exchange forward
               if(plumedswitch){
                 plumed_cmd(plumedmain,"setAtomsNlocal",&cr->dd->nat_home);
                 plumed_cmd(plumedmain,"setAtomsGatindex",cr->dd->gatindex);
               }
             }
           }
-
+/* exchange back end */
         }
 /* END PLUMED HREX */
 

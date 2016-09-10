@@ -5,9 +5,11 @@ if [ ! -d tprs ]; then mkdir tprs; fi
 source ~/Programs/gromacs/gromacs-4.6.7/bin/GMXRC
 
 rm top/*
-for i in {0..3}; do
+lambdas=(1.0 1.0 1.0 1.0 0.9 0.9 0.9 0.9 0.8 0.8 0.8 0.8)
+for i in {0..11}; do
+lambda=${lambdas[i]}
 lambda=1.0
-~/Programs/plumed/2.2-hrex-wenwei/bin/plumed partial_tempering 1.0 < processed.top > top/topol${i}.top
+~/Programs/plumed/2.2-hrex-wenwei/bin/plumed partial_tempering $lambda < processed.top > top/topol${i}.top
 awk -v f=$lambda '
 BEGIN {cmaptypes=0; pairtypes=0}
 {
@@ -31,22 +33,17 @@ done
 
 
 rm tpr/*
-for i in {0..3}; do
+for i in {0..11}; do
     grompp -f grompp.mdp -p top/topol_cmap${i}.top -o tpr/topol${i}.tpr -maxwarn 1
 done
 rm \#*
 
-
 python plumed.py
 
-# this works
-mpirun -np 4 /sansom/s103/domanski/Programs/gromacs/gromacs-4.6.7/bin/mdrun_mpi -multi 4 -replex 5 -s tpr/topol.tpr -plumed -hrex
-grep -A10 "Replica exchange statistics" md0.log 
+mpirun -np 4 /sansom/s103/domanski/Programs/gromacs/gromacs-5.1.2_plumed2.2-hrex-wenwei/bin/mdrun_mpi -multi 4 -replex 10 -nsteps 1000 -s tpr/topol.tpr -plumed -hrex
 
-# this doesn't
-mpirun -np 4 /sansom/s103/domanski/Programs/gromacs/gromacs-4.6.7/bin/mdrun_mpi -multi 4 -replex 5 -s tpr/topol.tpr -plumed -hrex
 grep -A10 "Replica exchange statistics" md0.log
-
 
 rm \#* traj_comp* state* md*.log ener* confout* COLVAR.* bck.* step*.pdb
 
+qsubmit.py --jobname "test" --cluster archer --partition standard --nodes 1 --script=submit.sh --duration 24:00:00
